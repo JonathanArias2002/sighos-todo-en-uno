@@ -269,7 +269,7 @@ app.delete('/api/specialties/:id', async (req, res, next) => {
       `,
       [specialtyId]
     );
-    
+
     if (rows.length === 0) {
       return res.status(404).json({ error: 'Especialidad no encontrada.' });
     }
@@ -401,15 +401,15 @@ app.post('/api/patients', async (req, res, next) => {
           password
       `,
       [
-        dni.trim(), 
-        name.trim(), 
-        gender || null, 
-        birthDate || null, 
-        phone || null, 
-        email || null, 
-        address || null, 
-        emergencyContact1 || null, 
-        emergencyContact2 || null, 
+        dni.trim(),
+        name.trim(),
+        gender || null,
+        birthDate || null,
+        phone || null,
+        email || null,
+        address || null,
+        emergencyContact1 || null,
+        emergencyContact2 || null,
         password || null
       ]
     );
@@ -468,16 +468,16 @@ app.put('/api/patients/:id', async (req, res, next) => {
           password
       `,
       [
-        patientId, 
-        dni.trim(), 
-        name.trim(), 
-        gender || null, 
-        birthDate || null, 
-        phone || null, 
-        email || null, 
-        address || null, 
-        emergencyContact1 || null, 
-        emergencyContact2 || null, 
+        patientId,
+        dni.trim(),
+        name.trim(),
+        gender || null,
+        birthDate || null,
+        phone || null,
+        email || null,
+        address || null,
+        emergencyContact1 || null,
+        emergencyContact2 || null,
         password || null
       ]
     );
@@ -512,7 +512,7 @@ app.delete('/api/patients/:id', async (req, res, next) => {
       `,
       [patientId]
     );
-    
+
     if (rows.length === 0) {
       return res.status(404).json({ error: 'Paciente no encontrado.' });
     }
@@ -638,15 +638,15 @@ app.post('/api/staff', async (req, res, next) => {
           id_trabajador as id
       `,
       [
-        dni.trim(), 
-        name.trim(), 
-        specialtyId || null, 
-        status || 'ACTIVO', 
-        phone || null, 
-        email || null, 
-        address || null, 
-        salary || null, 
-        userRole || 'EMPLEADO', 
+        dni.trim(),
+        name.trim(),
+        specialtyId || null,
+        status || 'ACTIVO',
+        phone || null,
+        email || null,
+        address || null,
+        salary || null,
+        userRole || 'EMPLEADO',
         password || null
       ]
     );
@@ -717,16 +717,16 @@ app.put('/api/staff/:id', async (req, res, next) => {
         RETURNING id_trabajador as id
       `,
       [
-        staffId, 
-        dni.trim(), 
-        name.trim(), 
-        specialtyId || null, 
-        status || 'ACTIVO', 
-        phone || null, 
-        email || null, 
-        address || null, 
-        salary || null, 
-        userRole || 'EMPLEADO', 
+        staffId,
+        dni.trim(),
+        name.trim(),
+        specialtyId || null,
+        status || 'ACTIVO',
+        phone || null,
+        email || null,
+        address || null,
+        salary || null,
+        userRole || 'EMPLEADO',
         password || null
       ]
     );
@@ -784,7 +784,7 @@ app.delete('/api/staff/:id', async (req, res, next) => {
       `,
       [staffId]
     );
-    
+
     if (rows.length === 0) {
       return res.status(404).json({ error: 'Personal no encontrado.' });
     }
@@ -903,9 +903,9 @@ app.post('/api/appointments', async (req, res, next) => {
           id_cita as id
       `,
       [
-        patientId, 
-        serviceId, 
-        status || 'EN ESPERA', 
+        patientId,
+        serviceId,
+        status || 'EN ESPERA',
         dateTime
       ]
     );
@@ -966,10 +966,10 @@ app.put('/api/appointments/:id', async (req, res, next) => {
         RETURNING id_cita as id
       `,
       [
-        appointmentId, 
-        patientId, 
-        serviceId, 
-        status || 'EN ESPERA', 
+        appointmentId,
+        patientId,
+        serviceId,
+        status || 'EN ESPERA',
         dateTime
       ]
     );
@@ -1023,7 +1023,7 @@ app.delete('/api/appointments/:id', async (req, res, next) => {
       `,
       [appointmentId]
     );
-    
+
     if (rows.length === 0) {
       return res.status(404).json({ error: 'Cita no encontrada.' });
     }
@@ -1553,7 +1553,7 @@ app.delete('/api/appointment-rates/:id', async (req, res, next) => {
     }
 
     const deletedRate = await getRateById(serviceId);
-    
+
     if (!deletedRate) {
       return res.status(404).json({ error: 'Tarifa no encontrada.' });
     }
@@ -1758,7 +1758,7 @@ app.delete('/api/exam-rates/:id', async (req, res, next) => {
     }
 
     const deletedRate = await getRateById(serviceId, 'EXAMEN');
-    
+
     if (!deletedRate) {
       return res.status(404).json({ error: 'Examen no encontrado.' });
     }
@@ -1963,7 +1963,7 @@ app.delete('/api/procedure-rates/:id', async (req, res, next) => {
     }
 
     const deletedRate = await getRateById(serviceId, 'PROCEDIMIENTO');
-    
+
     if (!deletedRate) {
       return res.status(404).json({ error: 'Procedimiento no encontrado.' });
     }
@@ -2179,7 +2179,7 @@ app.delete('/api/medical-histories/:id', async (req, res, next) => {
       `SELECT id_historial FROM historial_clinico WHERE id_historial = $1 LIMIT 1`,
       [historyId]
     );
-    
+
     if (rows.length === 0) {
       return res.status(404).json({ error: 'Historial no encontrado.' });
     }
@@ -2291,7 +2291,7 @@ app.delete('/api/work-schedules/:id', async (req, res, next) => {
       `SELECT id_horario FROM horarios_laborales WHERE id_horario = $1 LIMIT 1`,
       [scheduleId]
     );
-    
+
     if (rows.length === 0) {
       return res.status(404).json({ error: 'Horario no encontrado.' });
     }
@@ -2310,10 +2310,24 @@ const upload = multer({
   limits: { fileSize: 20 * 1024 * 1024 }
 });
 
-const storage = new Storage({
-  projectId: 'almacenamiento-sighos',
-  keyFilename: path.join(__dirname, 'gcs-key.json')
-});
+// --- CONFIGURACIÓN DE GOOGLE CLOUD STORAGE DINÁMICA ---
+let storageOptions = {
+  projectId: 'almacenamiento-sighos'
+};
+
+if (process.env.GOOGLE_CREDENTIALS) {
+  try {
+    // Si está en Railway, parseamos el string completo del JSON que pusiste en las variables
+    storageOptions.credentials = JSON.parse(process.env.GOOGLE_CREDENTIALS);
+  } catch (parseError) {
+    console.error('Error al parsear GOOGLE_CREDENTIALS desde las variables de entorno:', parseError);
+  }
+} else {
+  // Si estás en tu computadora (Local), seguirá buscando tu archivo físico gcs-key.json
+  storageOptions.keyFilename = path.join(__dirname, 'gcs-key.json');
+}
+
+const storage = new Storage(storageOptions);
 const bucketName = 'bucket-almacenamiento-sighos';
 const bucket = storage.bucket(bucketName);
 
