@@ -1,0 +1,13 @@
+{
+  "type": "service_account",
+  "project_id": "almacenamiento-sighos",
+  "private_key_id": "10e424ea222f0ae0632f130f2c9b8e63b8a74810",
+  "private_key": "-----BEGIN PRIVATE KEY-----\nMIIEvgIBADANBgkqhkiG9w0BAQEFAASCBKgwggSkAgEAAoIBAQDbmvHxCFqHEfas\njx5IgVpMuWqpoyLOaRRDsvNkDYXi7uIkgaMlPGutygUQADUs2kza370CYUVICqP5\nfNgbPNVq4KMBfFJrOJszTuOwNk/MoHxg/K0XaSrjSJTa26VeGpUWdboozLrmmq42\nZc2qY6Uk6kjGXXRFmarGY8/stI0XoTAfJaZoFA3fBMZQ9fCuO3+bM+q7eAADmiFP\nwQN3CswwwYkk1BRseDvnBFzX9mBvRni9l6Sl4j5VvyYF6IeYh1C4Ai0vj7pqxQiC\nmDKN+1XNm0XjOHH4HtQfZjlyqXz88DahW8LpwxIKl5guKeNE/4fy1ORS9lr1VCZA\nAQ52O+lTAgMBAAECggEAC9A+gqZd5FU5jVfXm7PlrSnuTHjbpvntHqUyRagakzYh\nkTAuHBMvgbZT5mP0eFi3+LA/hTDBXto/ruyh3Xk8y9aQvkQ3VNBDPRPZ2MFbMplR\nh5AgKZm9NmPRqiJVt4W7jm0/2fEFfuFETOXWFfvtRtqZlp4xYosdLjXxWfzueB5Y\npFbttsZA55F6WQbcwuhxN34CJNG3LpiNnXNz7m5myidbINlcOtu5gMGQTyKrwB+8\nqw3tDltoHtBkxWNFbnuZd1jmf1W2DBFFC/5UtrZ4OJ4w7PcghqEBscXdu/6XSWDA\nPNcG7dpLFE8Ny1u77lhd54an2kiW4lrtFpcyryZlnQKBgQD4Sa0XU1gyfETSaU5D\n1kWQNZ18FJbh/9H8DwM//R6rWeHZT9vr3zK02hYAKSHf1+Rlkvrf7d+xVemPYmqo\nrgVVlurCx86080NMuAE+sBisQbHnGlG0zTWPXB1NmgE3j3z8TAlzx2wHPJvtMhCh\nqIAyxMU+H4oVV0ZJ2j3bIocNrQKBgQDibTE/jdsj+edsqUz+8z+qWIl/QbPFE5g0\ngGHhHHG4vlHaAXI3a/tA8Xpt6gxQdplQEXstMIPp9x6humX1J1sZmDlftsdrgVv3\nUMny4h63/YW0YpWqj1VwkKHfZzX+MhXpJPpRZNaOl14pOvGf27jvBSON4TEm8Syn\nPjQYU1+y/wKBgAT5bOdXux+fz70rcO74/wHJoTMYMoGqn2leX6FLj+686UJyUCSk\nnx5ydBhiupQCfkfuruoHmQCziO9feGWSvvadBG0Mlb6YVRPXZ+b6njPtSQQpSdPG\nfLk3jjq8yCN103o2h8XzC94FP9Z7t0uV1aOuv4jkFt8glX7rSWv3gB8tAoGBAJTm\nrc5XoVcFTrVcmK/Ik4OYecNgF7JwclWEX9nD9N1C+1zcOppLvo00wAhsM/DuLWBE\nPra3AujnhBNjGw2e9f/c5U4WSwpdpXb8f/Hj1cO1SyoW8smZPNyroGfj3dPuaA5M\nLPk90QMwc9G1W5R+0B0PShRRlRtA2taYx3V/zp1NAoGBANh47ijYUy+eOhvGRzH9\nosxJYe6htT6JEKEyZ4Yrh8B2Bwdv/SmnBBrvzY6WBWfaYvwzIL7N8XIMiRvrXLsb\nlNKRAFCvwmkzQHrIUtQIsaHJ18BaWYfpauRQBp1ZDpfwV9nARGa9puUQmFan5rUv\nLxcZxdVZAf9E5HcivV3yVi+C\n-----END PRIVATE KEY-----\n",
+  "client_email": "app-storage-manager@almacenamiento-sighos.iam.gserviceaccount.com",
+  "client_id": "106244493298063158927",
+  "auth_uri": "https://accounts.google.com/o/oauth2/auth",
+  "token_uri": "https://oauth2.googleapis.com/token",
+  "auth_provider_x509_cert_url": "https://www.googleapis.com/oauth2/v1/certs",
+  "client_x509_cert_url": "https://www.googleapis.com/robot/v1/metadata/x509/app-storage-manager%40almacenamiento-sighos.iam.gserviceaccount.com",
+  "universe_domain": "googleapis.com"
+}
