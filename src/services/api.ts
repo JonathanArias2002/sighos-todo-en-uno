@@ -654,6 +654,25 @@ export const fetchMedicalHistories = async (searchTerm = ''): Promise<MedicalHis
   return data.histories.map(mapMedicalHistoryFromServer);
 };
 
+export const fetchDigitizedHistories = async (searchTerm = ''): Promise<MedicalHistory[]> => {
+  const query = searchTerm ? `?search=${encodeURIComponent(searchTerm)}` : '';
+  const data = await request<{ histories: any[] }>(`/digitized-histories${query}`);
+  return data.histories.map(mapMedicalHistoryFromServer);
+};
+
+export const approveDigitizedHistory = async (id: number, doctorId: number): Promise<{ success: boolean; newHistoryId: number }> => {
+  return await request<{ success: boolean; newHistoryId: number }>(`/digitized-histories/${id}/approve`, {
+    method: 'POST',
+    body: JSON.stringify({ doctorId }),
+  });
+};
+
+export const rejectDigitizedHistory = async (id: number): Promise<void> => {
+  await request<{ success: boolean }>(`/digitized-histories/${id}`, {
+    method: 'DELETE',
+  });
+};
+
 export const createMedicalHistory = async (payload: MedicalHistoryPayload): Promise<MedicalHistory> => {
   const data = await request<{ history: any }>('/medical-histories', {
     method: 'POST',
@@ -725,6 +744,24 @@ export const saveWorkSchedule = async (payload: WorkSchedulePayload): Promise<Wo
 
 export const deleteWorkSchedule = async (id: number): Promise<void> => {
   await request<{ success: boolean }>(`/work-schedules/${id}`, {
+    method: 'DELETE',
+  });
+};
+
+export interface FailedDigitization {
+  id: number;
+  fileName: string;
+  fileType: string;
+  date: string;
+}
+
+export const fetchFailedDigitizations = async (): Promise<FailedDigitization[]> => {
+  const data = await request<{ failedDigitizations: FailedDigitization[] }>(`/failed-digitizations`);
+  return data.failedDigitizations;
+};
+
+export const deleteFailedDigitization = async (id: number): Promise<void> => {
+  await request<{ success: boolean }>(`/failed-digitizations/${id}`, {
     method: 'DELETE',
   });
 };

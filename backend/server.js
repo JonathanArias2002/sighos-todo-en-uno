@@ -323,6 +323,35 @@ app.get('/api/patients', async (req, res, next) => {
   }
 });
 
+app.get('/api/patients/check-dni/:dni', async (req, res, next) => {
+  try {
+    const dni = String(req.params.dni).trim();
+
+    if (!dni) {
+      return res.status(400).json({ error: 'El DNI es requerido.' });
+    }
+
+    const { rows } = await query(
+      `SELECT id_paciente FROM pacientes WHERE dni = $1 LIMIT 1`,
+      [dni]
+    );
+
+    if (rows.length === 0) {
+      return res.status(404).json({ 
+        registered: false, 
+        message: 'Aviso: El DNI proporcionado no se encuentra registrado en el sistema.' 
+      });
+    }
+
+    return res.json({ 
+      registered: true, 
+      patientId: rows[0].id_paciente 
+    });
+  } catch (error) {
+    next(error);
+  }
+});
+
 app.get('/api/patients/:id', async (req, res, next) => {
   try {
     const patientId = Number(req.params.id);
@@ -1980,6 +2009,239 @@ app.delete('/api/procedure-rates/:id', async (req, res, next) => {
 });
 
 // --- MEDICAL HISTORIES ---
+
+// --- DIGITIZED HISTORIES ---
+app.get('/api/digitized-histories', async (req, res, next) => {
+  try {
+    const search = String(req.query.search || '').trim();
+
+    const { rows } = await query(
+      `
+        SELECT 
+          d.id_historial as id,
+          d.fecha as date,
+          d.id_paciente as "patientId",
+          pa.dni as "patientDni",
+          pa.nombre_completo as "patientName",
+          0 as "doctorId",
+          '-' as "doctorName",
+          d.peso as weight,
+          d.altura as height,
+          d.hallazgos as findings,
+          d.diagnostico as diagnosis,
+          d.tratamiento as treatment,
+          d.medicamentos as medications,
+          d.procedimientos as procedures
+        FROM historial_digitalizado d
+        INNER JOIN pacientes pa ON d.id_paciente = pa.id_paciente
+        WHERE
+          $1 = ''
+          OR pa.dni ILIKE '%' || $1 || '%'
+          OR pa.nombre_completo ILIKE '%' || $1 || '%'
+        ORDER BY d.fecha DESC, d.id_historial DESC
+      `,
+      [search]
+    );
+
+    res.json({ histories: rows });
+  } catch (error) {
+    next(error);
+  }
+});
+
+app.post('/api/digitized-histories', async (req, res, next) => {
+  try {
+    const { patientId, weight, height, findings, diagnosis, treatment, medications, procedures, date } = req.body || {};
+
+    if (!patientId) {
+      return res.status(400).json({ error: 'El ID de paciente es obligatorio.' });
+    }
+
+    const insertResult = await query(
+      `
+        INSERT INTO historial_digitalizado (
+          fecha,
+          id_paciente,
+          peso,
+          altura,
+          hallazgos,
+          diagnostico,
+          tratamiento,
+          medicamentos,
+          procedimientos
+        )
+        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
+        RETURNING id_historial as id
+      `,
+      [
+        date || new Date().toISOString().split('T')[0],
+        patientId,
+        weight || null,
+        height || null,
+        findings || null,
+        diagnosis || null,
+        treatment || null,
+        medications || null,
+        procedures || null
+      ]
+    );
+
+    return res.status(201).json({ success: true, historyId: insertResult.rows[0].id });
+  } catch (error) {
+    next(error);
+  }
+});
+
+app.post('/api/digitized-histories/:id/approve', async (req, res, next) => {
+  try {
+    const historyId = Number(req.params.id);
+    const { doctorId } = req.body || {};
+
+    if (!Number.isInteger(historyId) || historyId <= 0) {
+      return res.status(400).json({ error: 'ID de historial digitalizado invalido.' });
+    }
+
+    if (!doctorId) {
+      return res.status(400).json({ error: 'El ID del médico es obligatorio para aprobar.' });
+    }
+
+    const { rows: digitizedRows } = await query(
+      `SELECT * FROM historial_digitalizado WHERE id_historial = $1 LIMIT 1`,
+      [historyId]
+    );
+
+    if (digitizedRows.length === 0) {
+      return res.status(404).json({ error: 'Historial digitalizado no encontrado.' });
+    }
+
+    const rec = digitizedRows[0];
+
+    const insertResult = await query(
+      `
+        INSERT INTO historial_clinico (
+          fecha,
+          id_paciente,
+          id_medico_encargado,
+          peso,
+          altura,
+          hallazgos,
+          diagnostico,
+          tratamiento,
+          medicamentos,
+          procedimientos
+        )
+        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
+        RETURNING id_historial as id
+      `,
+      [
+        rec.fecha,
+        rec.id_paciente,
+        doctorId,
+        rec.peso,
+        rec.altura,
+        rec.hallazgos,
+        rec.diagnostico,
+        rec.tratamiento,
+        rec.medicamentos,
+        rec.procedimientos
+      ]
+    );
+
+    await query(`DELETE FROM historial_digitalizado WHERE id_historial = $1`, [historyId]);
+
+    res.json({ success: true, newHistoryId: insertResult.rows[0].id });
+  } catch (error) {
+    next(error);
+  }
+});
+
+app.delete('/api/digitized-histories/:id', async (req, res, next) => {
+  try {
+    const historyId = Number(req.params.id);
+
+    if (!Number.isInteger(historyId) || historyId <= 0) {
+      return res.status(400).json({ error: 'ID de historial digitalizado invalido.' });
+    }
+
+    const { rows } = await query(
+      `SELECT id_historial FROM historial_digitalizado WHERE id_historial = $1 LIMIT 1`,
+      [historyId]
+    );
+
+    if (rows.length === 0) {
+      return res.status(404).json({ error: 'Historial digitalizado no encontrado.' });
+    }
+
+    await query(`DELETE FROM historial_digitalizado WHERE id_historial = $1`, [historyId]);
+
+    return res.json({ success: true });
+  } catch (error) {
+    next(error);
+  }
+});
+// --- FAILED DIGITIZATIONS ---
+app.post('/api/failed-digitizations', async (req, res, next) => {
+  try {
+    const { nombre_archivo, tipo_archivo } = req.body || {};
+
+    if (!nombre_archivo) {
+      return res.status(400).json({ error: 'El nombre del archivo es obligatorio.' });
+    }
+
+    const insertResult = await query(
+      `
+        INSERT INTO registro_dig_fallidas (nombre_archivo, tipo_archivo)
+        VALUES ($1, $2)
+        RETURNING id_digitalizacion_fallida as id
+      `,
+      [nombre_archivo, tipo_archivo || null]
+    );
+
+    return res.status(201).json({ success: true, id: insertResult.rows[0].id });
+  } catch (error) {
+    next(error);
+  }
+});
+
+app.get('/api/failed-digitizations', async (req, res, next) => {
+  try {
+    const { rows } = await query(
+      `
+        SELECT 
+          id_digitalizacion_fallida as id,
+          nombre_archivo as "fileName",
+          tipo_archivo as "fileType",
+          fecha_intento as date
+        FROM registro_dig_fallidas
+        ORDER BY fecha_intento DESC
+      `
+    );
+
+    res.json({ failedDigitizations: rows });
+  } catch (error) {
+    next(error);
+  }
+});
+
+app.delete('/api/failed-digitizations/:id', async (req, res, next) => {
+  try {
+    const failedId = Number(req.params.id);
+
+    if (!Number.isInteger(failedId) || failedId <= 0) {
+      return res.status(400).json({ error: 'ID inválido.' });
+    }
+
+    await query(
+      `DELETE FROM registro_dig_fallidas WHERE id_digitalizacion_fallida = $1`, 
+      [failedId]
+    );
+
+    return res.json({ success: true });
+  } catch (error) {
+    next(error);
+  }
+});
+
 app.get('/api/medical-histories', async (req, res, next) => {
   try {
     const search = String(req.query.search || '').trim();
@@ -2310,24 +2572,34 @@ const upload = multer({
   limits: { fileSize: 20 * 1024 * 1024 }
 });
 
-// --- CONFIGURACIÓN DE GOOGLE CLOUD STORAGE DINÁMICA ---
-let storageOptions = {
-  projectId: 'almacenamiento-sighos'
+let storageConfig = {
+  projectId: process.env.GCP_PROJECT_ID || 'almacenamiento-sighos',
 };
 
-if (process.env.GOOGLE_CREDENTIALS) {
+if (process.env.GOOGLE_CREDENTIALS_BASE64) {
   try {
-    // Si está en Railway, parseamos el string completo del JSON que pusiste en las variables
-    storageOptions.credentials = JSON.parse(process.env.GOOGLE_CREDENTIALS);
-  } catch (parseError) {
-    console.error('Error al parsear GOOGLE_CREDENTIALS desde las variables de entorno:', parseError);
+    const jsonStr = Buffer.from(process.env.GOOGLE_CREDENTIALS_BASE64, 'base64').toString('utf-8');
+    storageConfig.credentials = JSON.parse(jsonStr);
+  } catch (err) {
+    console.error('Error parseando GOOGLE_CREDENTIALS_BASE64:', err.message);
   }
+} else if (process.env.GOOGLE_CREDENTIALS) {
+  try {
+    storageConfig.credentials = JSON.parse(process.env.GOOGLE_CREDENTIALS);
+  } catch (err) {
+    console.error('Error parseando GOOGLE_CREDENTIALS:', err.message);
+  }
+} else if (process.env.GCP_CLIENT_EMAIL && process.env.GCP_PRIVATE_KEY) {
+  storageConfig.credentials = {
+    client_email: process.env.GCP_CLIENT_EMAIL,
+    private_key: process.env.GCP_PRIVATE_KEY.replace(/\\n/g, '\n'),
+  };
 } else {
-  // Si estás en tu computadora (Local), seguirá buscando tu archivo físico gcs-key.json
-  storageOptions.keyFilename = path.join(__dirname, 'gcs-key.json');
+  // Fallback local
+  storageConfig.keyFilename = path.join(__dirname, 'gcs-key.json');
 }
 
-const storage = new Storage(storageOptions);
+const storage = new Storage(storageConfig);
 const bucketName = 'bucket-almacenamiento-sighos';
 const bucket = storage.bucket(bucketName);
 

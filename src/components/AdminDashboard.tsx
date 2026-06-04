@@ -94,6 +94,12 @@ import {
   createMedicalHistory,
   updateMedicalHistory,
   deleteMedicalHistory,
+  fetchDigitizedHistories,
+  approveDigitizedHistory,
+  rejectDigitizedHistory,
+  fetchFailedDigitizations,
+  deleteFailedDigitization,
+  type FailedDigitization,
   type MedicalHistory,
   type MedicalHistoryPayload,
   fetchWorkSchedules,
@@ -2222,6 +2228,31 @@ const DigitizedMedicalHistoryManagement = ({ initialSearch = '', currentDoctorId
   const [digitizeMessage, setDigitizeMessage] = React.useState('');
   const fileInputRef = React.useRef<HTMLInputElement>(null);
 
+  const [showFailedModal, setShowFailedModal] = React.useState(false);
+  const [failedRecords, setFailedRecords] = React.useState<FailedDigitization[]>([]);
+  const [isLoadingFailed, setIsLoadingFailed] = React.useState(false);
+
+  const loadFailedData = async () => {
+    setIsLoadingFailed(true);
+    try {
+      const data = await fetchFailedDigitizations();
+      setFailedRecords(data);
+    } catch (error) {
+      console.error(error);
+    } finally {
+      setIsLoadingFailed(false);
+    }
+  };
+
+  const handleDeleteFailed = async (id: number) => {
+    try {
+      await deleteFailedDigitization(id);
+      await loadFailedData();
+    } catch (error) {
+      console.error(error);
+    }
+  };
+
   const handleDragOver = (e: React.DragEvent) => {
     e.preventDefault();
   };
@@ -2303,7 +2334,7 @@ const DigitizedMedicalHistoryManagement = ({ initialSearch = '', currentDoctorId
     if (showLoading) setIsLoading(true);
     try {
       const [historiesData, patientsData] = await Promise.all([
-        fetchMedicalHistories(term),
+        fetchDigitizedHistories(term),
         fetchPatients()
       ]);
       setHistory(historiesData);
@@ -2408,6 +2439,24 @@ const DigitizedMedicalHistoryManagement = ({ initialSearch = '', currentDoctorId
     }
   };
 
+  const [approveId, setApproveId] = React.useState<number | null>(null);
+
+  const confirmApprove = async () => {
+    if (!approveId) return;
+    setIsSaving(true);
+    try {
+      await approveDigitizedHistory(approveId, currentDoctorId);
+      await loadData(searchTerm, false);
+      setApproveId(null);
+      setApiError('');
+    } catch (error) {
+      const message = error instanceof Error ? error.message : 'No se pudo aprobar el historial.';
+      setApiError(message);
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
   const handleDelete = (id: number) => {
     setDeleteId(id);
   };
@@ -2416,12 +2465,12 @@ const DigitizedMedicalHistoryManagement = ({ initialSearch = '', currentDoctorId
     if (!deleteId) return;
     setIsSaving(true);
     try {
-      await deleteMedicalHistory(deleteId);
+      await rejectDigitizedHistory(deleteId);
       await loadData(searchTerm, false);
       setDeleteId(null);
       setApiError('');
     } catch (error) {
-      const message = error instanceof Error ? error.message : 'No se pudo eliminar el historial.';
+      const message = error instanceof Error ? error.message : 'No se pudo rechazar el historial.';
       setApiError(message);
     } finally {
       setIsSaving(false);
@@ -2442,6 +2491,16 @@ const DigitizedMedicalHistoryManagement = ({ initialSearch = '', currentDoctorId
         <div className="flex items-center gap-4">
           <button 
             onClick={() => {
+              setShowFailedModal(true);
+              loadFailedData();
+            }}
+            className="bg-dash-danger/10 text-dash-danger border border-dash-danger/20 px-6 py-2.5 rounded-xl font-bold text-sm uppercase tracking-widest hover:bg-dash-danger/20 active:scale-95 transition-all flex items-center gap-2"
+          >
+            <AlertCircle size={18} />
+            Ver digitalizaciones fallidas
+          </button>
+          <button 
+            onClick={() => {
               setShowDigitizeModal(true);
               setDigitizeFiles([]);
               setDigitizeMessage('');
@@ -2450,13 +2509,6 @@ const DigitizedMedicalHistoryManagement = ({ initialSearch = '', currentDoctorId
           >
             <UploadCloud size={18} />
             Digitalizar documentos
-          </button>
-          <button 
-            onClick={() => handleOpenModal('add')}
-            className="bg-dash-accent text-white px-6 py-2.5 rounded-xl font-bold text-sm uppercase tracking-widest hover:brightness-110 active:scale-95 transition-all shadow-md flex items-center gap-2"
-          >
-            <FileText size={18} />
-            Nuevo Historial
           </button>
         </div>
       </div>
@@ -2520,18 +2572,18 @@ const DigitizedMedicalHistoryManagement = ({ initialSearch = '', currentDoctorId
                         <Eye size={16} />
                       </button>
                       <button 
-                        className="p-2 bg-dash-glass border border-dash-border rounded-lg text-dash-text-dim hover:text-dash-accent hover:border-dash-accent transition-all"
-                        onClick={() => handleOpenModal('edit', entry)}
-                        title="Editar"
+                        className="p-2 bg-dash-success/10 border border-dash-success/20 rounded-lg text-dash-success/80 hover:text-dash-success hover:bg-dash-success/20 hover:border-dash-success transition-all"
+                        onClick={() => setApproveId(entry.id)}
+                        title="Aprobar"
                       >
-                        <Pencil size={16} />
+                        <CheckCircle2 size={16} />
                       </button>
                       <button 
                         className="p-2 bg-dash-danger/5 border border-dash-danger/20 rounded-lg text-dash-danger/60 hover:text-dash-danger hover:bg-dash-danger/20 hover:border-dash-danger transition-all"
                         onClick={() => handleDelete(entry.id)}
-                        title="Eliminar"
+                        title="Rechazar"
                       >
-                        <Trash2 size={16} />
+                        <X size={16} />
                       </button>
                     </div>
                   </td>
@@ -2552,6 +2604,14 @@ const DigitizedMedicalHistoryManagement = ({ initialSearch = '', currentDoctorId
         isOpen={!!deleteId} 
         onCancel={() => setDeleteId(null)} 
         onConfirm={confirmDelete} 
+        title="¿Está seguro de rechazar este historial digitalizado?"
+      />
+
+      <DeleteConfirmationModal 
+        isOpen={!!approveId} 
+        onCancel={() => setApproveId(null)} 
+        onConfirm={confirmApprove} 
+        title="¿Está seguro de aprobar este historial y enviarlo a los registros clínicos?"
       />
 
       {modalMode && (
@@ -2820,6 +2880,83 @@ const DigitizedMedicalHistoryManagement = ({ initialSearch = '', currentDoctorId
           </motion.div>
         </div>
       )}
+
+      {showFailedModal && (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-dash-bg/80 backdrop-blur-sm">
+          <motion.div 
+            initial={{ opacity: 0, scale: 0.95 }}
+            animate={{ opacity: 1, scale: 1 }}
+            className="bg-dash-panel border border-dash-border w-full max-w-4xl rounded-3xl shadow-2xl overflow-hidden flex flex-col max-h-[85vh]"
+          >
+            <div className="p-6 border-b border-dash-border flex justify-between items-center bg-dash-danger/5">
+              <div className="flex items-center gap-3">
+                <div className="p-2 bg-dash-danger/10 rounded-lg">
+                  <AlertCircle className="text-dash-danger w-5 h-5" />
+                </div>
+                <h3 className="text-sm font-bold text-dash-danger uppercase tracking-[0.2em]">
+                  Digitalizaciones Fallidas
+                </h3>
+              </div>
+              <button onClick={() => setShowFailedModal(false)} className="text-dash-text-dim hover:text-dash-danger transition-colors">
+                <X size={20} />
+              </button>
+            </div>
+            
+            <div className="p-8 overflow-y-auto flex-1">
+              <table className="w-full text-left">
+                <thead>
+                  <tr className="border-b border-dash-border bg-dash-glass/50">
+                    <th className="px-6 py-4 text-[10px] font-bold text-dash-text-dim uppercase tracking-[0.2em]">ID</th>
+                    <th className="px-6 py-4 text-[10px] font-bold text-dash-text-dim uppercase tracking-[0.2em]">Archivo</th>
+                    <th className="px-6 py-4 text-[10px] font-bold text-dash-text-dim uppercase tracking-[0.2em]">Tipo</th>
+                    <th className="px-6 py-4 text-[10px] font-bold text-dash-text-dim uppercase tracking-[0.2em]">Fecha</th>
+                    <th className="px-6 py-4 text-[10px] font-bold text-dash-text-dim uppercase tracking-[0.2em] text-right">Acciones</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-dash-border">
+                  {isLoadingFailed ? (
+                    <tr>
+                      <td colSpan={5} className="px-6 py-10 text-center text-dash-text-dim italic text-sm">Cargando registros...</td>
+                    </tr>
+                  ) : failedRecords.length > 0 ? (
+                    failedRecords.map((record) => (
+                      <tr key={record.id} className="hover:bg-dash-glass transition-colors">
+                        <td className="px-6 py-4 text-xs font-mono text-dash-text-dim">#{record.id}</td>
+                        <td className="px-6 py-4 text-sm font-bold text-dash-text">{record.fileName}</td>
+                        <td className="px-6 py-4 text-xs font-mono text-dash-text-dim">{record.fileType || '-'}</td>
+                        <td className="px-6 py-4 text-xs text-dash-text-dim">{new Date(record.date).toLocaleString()}</td>
+                        <td className="px-6 py-4 text-right">
+                          <button 
+                            className="p-2 bg-dash-danger/5 border border-dash-danger/20 rounded-lg text-dash-danger/60 hover:text-dash-danger hover:bg-dash-danger/20 hover:border-dash-danger transition-all"
+                            onClick={() => handleDeleteFailed(record.id)}
+                            title="Eliminar registro"
+                          >
+                            <Trash2 size={16} />
+                          </button>
+                        </td>
+                      </tr>
+                    ))
+                  ) : (
+                    <tr>
+                      <td colSpan={5} className="px-6 py-10 text-center text-dash-text-dim italic text-sm">No hay digitalizaciones fallidas.</td>
+                    </tr>
+                  )}
+                </tbody>
+              </table>
+            </div>
+            
+            <div className="p-6 border-t border-dash-border bg-dash-glass/30 flex justify-end">
+              <button 
+                onClick={() => setShowFailedModal(false)}
+                className="bg-dash-glass border border-dash-border text-dash-text-dim px-6 py-2.5 rounded-xl font-bold text-xs uppercase tracking-widest hover:bg-dash-panel hover:text-dash-text transition-all"
+              >
+                Cerrar
+              </button>
+            </div>
+          </motion.div>
+        </div>
+      )}
+
     </motion.div>
   );
 };

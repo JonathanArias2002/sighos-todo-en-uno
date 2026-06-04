@@ -6,3 +6,5 @@ coverage/
 *.log
 .env
 !.env.example
+gcs-key.json
+backend/gcs-key.json
