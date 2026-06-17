@@ -6,6 +6,8 @@ import { Storage } from '@google-cloud/storage';
 import path from 'path';
 import { fileURLToPath } from 'url';
 import { query, testConnection } from './db.js';
+import { testChatbotConnection } from './chatbot-db.js';
+import chatbotRouter from './chatbot/chatbot.routes.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -2634,6 +2636,9 @@ app.post('/api/upload-digitized', upload.array('files'), async (req, res, next) 
   }
 });
 
+// --- CHATBOT AI AGENT (MCP + Function Calling) ---
+app.use(chatbotRouter);
+
 // --- STATIC FILE SERVING (Production / Railway) ---
 const distPath = path.resolve(__dirname, '..', 'dist');
 app.use(express.static(distPath));
@@ -2650,6 +2655,11 @@ app.use((error, _req, res, _next) => {
 
 const start = async () => {
   await testConnection();
+
+  // Test chatbot read-only DB connection (non-blocking)
+  testChatbotConnection().catch((err) => {
+    console.warn('[api] Chatbot DB connection failed (chatbot may not work):', err.message);
+  });
 
   app.listen(apiPort, apiHost, () => {
     console.log(`[api] SIGHOS backend running at http://${apiHost}:${apiPort}`);

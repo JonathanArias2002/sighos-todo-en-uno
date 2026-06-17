@@ -9,6 +9,7 @@ import ClienteDashboard from './components/ClienteDashboard';
 import LoginPage from './components/LoginPage';
 import LoginPageCliente from './components/LoginPageCliente';
 import { login, loginClient, type AuthUser } from './services/api';
+import ChatbotWidget from './components/ChatbotWidget';
 
 export default function App() {
   const [isAuthenticated, setIsAuthenticated] = React.useState(false);
@@ -48,27 +49,36 @@ export default function App() {
     setUser(updatedUser);
   };
 
-  if (!isAuthenticated || !user) {
-    if (loginView === 'client') {
+  const renderContent = () => {
+    if (!isAuthenticated || !user) {
+      if (loginView === 'client') {
+        return (
+          <LoginPageCliente 
+            onLogin={handleClientLogin} 
+            onSwitchToWorker={() => setLoginView('worker')} 
+          />
+        );
+      }
       return (
-        <LoginPageCliente 
-          onLogin={handleClientLogin} 
-          onSwitchToWorker={() => setLoginView('worker')} 
+        <LoginPage 
+          onLogin={handleLogin} 
+          onSwitchToClient={() => setLoginView('client')} 
         />
       );
     }
-    return (
-      <LoginPage 
-        onLogin={handleLogin} 
-        onSwitchToClient={() => setLoginView('client')} 
-      />
-    );
-  }
 
-  if (user.role === 'CLIENTE') {
-    return <ClienteDashboard initialUser={user} onLogout={handleLogout} onUpdateUser={handleUpdateUser} />;
-  }
+    if (user.role === 'CLIENTE') {
+      return <ClienteDashboard initialUser={user} onLogout={handleLogout} onUpdateUser={handleUpdateUser} />;
+    }
 
-  return <AdminDashboard initialUser={user} onLogout={handleLogout} onUpdateUser={handleUpdateUser} />;
+    return <AdminDashboard initialUser={user} onLogout={handleLogout} onUpdateUser={handleUpdateUser} />;
+  };
+
+  return (
+    <>
+      {renderContent()}
+      {isAuthenticated && user && user.role !== 'CLIENTE' && <ChatbotWidget />}
+    </>
+  );
 }
 
